@@ -142,25 +142,20 @@ $(document).ready(function(){
 
   $(document).on("click", "#save:not(.disabled)", function(){
     function upload(blob){
-      console.log(blob);
       $.ajax({
         url: window.location.href,
         type: 'POST',
         data: blob,
         contentType: false,
         processData: false,
-        success: function(url) {
-          $("#audio").attr("src", url);
-          $("#audio")[0].play();
-          alert("Saved In Server. See audio element's src for URL");
+        success: function() {
+            var audio = new Audio(window.location.href + "/getTranslationAudio");
+            audio.play();
         }
       });
     }
-    if($(this).parent().data("type") === "mp3"){
-      Fr.voice.exportMP3(upload, "blob");
-    }else{
-      Fr.voice.export(upload, "blob");
-    }
+    Fr.voice.export(upload, "blob");
     restore();
   });
+
 });

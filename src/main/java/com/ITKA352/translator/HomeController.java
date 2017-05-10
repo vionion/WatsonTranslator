@@ -10,6 +10,7 @@ import org.apache.http.client.methods.HttpPost;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClients;
 import org.apache.http.message.BasicNameValuePair;
+import org.apache.tomcat.util.http.fileupload.IOUtils;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.ModelMap;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -17,6 +18,9 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.ResponseBody;
 
+import javax.servlet.http.HttpServletResponse;
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
@@ -27,10 +31,12 @@ import java.util.List;
 public class HomeController {
 
     byte[] wav;
+    private InputStream translation;
 
     @RequestMapping(path = "/getWav", method = RequestMethod.GET)
-    public @ResponseBody
-    byte[] getWav(){
+    public
+    @ResponseBody
+    byte[] getWav() {
         return this.wav;
     }
 
@@ -40,7 +46,9 @@ public class HomeController {
     }
 
     @RequestMapping(method = RequestMethod.POST)
-    public void sendWAV(@RequestBody byte[] wav) throws IOException {
+    public
+    @ResponseBody
+    String sendWAV(@RequestBody byte[] wav) throws IOException {
         this.wav = wav;
         String url = "https://langtrans.eu-gb.mybluemix.net/api/translate";
         CloseableHttpClient httpclient = HttpClients.createDefault();
@@ -56,14 +64,32 @@ public class HomeController {
         HttpEntity entity = response.getEntity();
 
         if (entity != null) {
-            InputStream instream = entity.getContent();
-            try {
-                System.out.println(instream);
-            } finally {
-                instream.close();
-            }
+            translation = entity.getContent();
+        }
+        return "great!";
+    }
+
+    @RequestMapping(path = "getTranslationAudio", method = RequestMethod.GET)
+    public void getTranslationAudio(HttpServletResponse servletResponse) throws IOException {
+        byte[] bytes = getByteArrayFromInputStream(translation);
+        IOUtils.copy(new ByteArrayInputStream(bytes), servletResponse.getOutputStream());
+        servletResponse.flushBuffer();
+    }
+
+
+    private static byte[] getByteArrayFromInputStream(InputStream is) throws IOException {
+        ByteArrayOutputStream buffer = new ByteArrayOutputStream();
+
+        int nRead;
+        byte[] data = new byte[16384];
+
+        while ((nRead = is.read(data, 0, data.length)) != -1) {
+            buffer.write(data, 0, nRead);
         }
 
+        buffer.flush();
+
+        return buffer.toByteArray();
     }
 
 }
