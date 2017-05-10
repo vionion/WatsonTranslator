@@ -42,7 +42,7 @@ public class HomeController {
     @RequestMapping(method = RequestMethod.POST)
     public void sendWAV(@RequestBody byte[] wav) throws IOException {
         this.wav = wav;
-        String url = "https://workshop-iot-app.mybluemix.net/record";
+        String url = "https://langtrans.eu-gb.mybluemix.net/api/translate";
         CloseableHttpClient httpclient = HttpClients.createDefault();
         HttpPost httppost = new HttpPost(url);
 
