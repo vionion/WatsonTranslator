@@ -18,12 +18,14 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.ResponseBody;
 
+import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
+import java.util.Enumeration;
 import java.util.List;
 
 @Controller
@@ -48,7 +50,16 @@ public class HomeController {
     @RequestMapping(method = RequestMethod.POST)
     public
     @ResponseBody
-    String sendWAV(@RequestBody byte[] wav) throws IOException {
+    String sendWAV(@RequestBody byte[] wav, HttpServletRequest request) throws IOException {
+        Enumeration headerNames = request.getHeaderNames();
+        String key, langCode = null;
+        while (langCode == null && headerNames.hasMoreElements()) {
+            key = ((String) headerNames.nextElement());
+            if(key.equalsIgnoreCase("x-lang-code")){
+                langCode = request.getHeader(key);
+            }
+        }
+        
         this.wav = wav;
         String url = "https://langtrans.eu-gb.mybluemix.net/api/translate";
         CloseableHttpClient httpclient = HttpClients.createDefault();
@@ -57,6 +68,7 @@ public class HomeController {
         // Request parameters and other properties.
         List<NameValuePair> params = new ArrayList<NameValuePair>(2);
         params.add(new BasicNameValuePair("link", "https://watson-translator.herokuapp.com/getWav"));
+        params.add(new BasicNameValuePair("lang", langCode));
         httppost.setEntity(new UrlEncodedFormEntity(params, "UTF-8"));
 
         //Execute and get the response.
